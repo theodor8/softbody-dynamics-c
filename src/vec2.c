@@ -20,5 +20,6 @@ Vec2 vec2_from_polar(float a, float l) { return vec2_mulf(vec2(cosf(a), sinf(a))
 float vec2_len(Vec2 v) { return sqrtf(v.x * v.x + v.y * v.y); }
 float vec2_len_squared(Vec2 v) { return v.x * v.x + v.y * v.y; }
 float vec2_dist(Vec2 v1, Vec2 v2) { return vec2_len(vec2_sub(v1, v2)); }
+float vec2_dist_squared(Vec2 v1, Vec2 v2) { return vec2_len_squared(vec2_sub(v1, v2)); }
 float vec2_ang(Vec2 v) { return atanf(v.y / v.x); }
 

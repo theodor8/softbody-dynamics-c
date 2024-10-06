@@ -3,11 +3,11 @@
 
 #include "SDL2/SDL.h"
 
+#include "common.h"
 #include "renderer.h"
 #include "softbody.h"
 
-#define WIDTH 600
-#define HEIGHT 600
+
 
 
 
@@ -17,21 +17,19 @@ int main(void)
 
     Renderer *r = renderer_create(WIDTH, HEIGHT);
 
-    Softbody *sb = softbody_create();
+    //Softbody *sb = softbody_create_rect(vec2(200, 100), vec2(100, 200));
+    Softbody *sb = softbody_create_circle(vec2(200, 100), 50, 7);
 
-    softbody_add_pt(sb, vec2(100, 100));
-    softbody_add_pt(sb, vec2(100, 200));
-    softbody_add_pt(sb, vec2(200, 100));
-    softbody_add_pt(sb, vec2(200, 200));
-    softbody_connect_pts(sb);
+
 
 
     bool quit = false;
     while (!quit)
     {
         int mx, my;
-        //Uint32 mb = SDL_GetMouseState(&mx, &my);
+        Uint32 mb = SDL_GetMouseState(&mx, &my);
         SDL_GetMouseState(&mx, &my);
+        Vec2 mp = vec2(mx, my);
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -59,12 +57,18 @@ int main(void)
             }
         }
 
-
+        if (SDL_BUTTON(mb) == SDL_BUTTON_LEFT)
+        {
+            Vec2 c = softbody_center(sb);
+            Vec2 f = vec2_mulf(vec2_normalized(vec2_sub(mp, c)), 5);
+            softbody_apply_force_closest(sb, mp, f);
+        }
 
         SDL_SetRenderDrawColor(r->renderer, 30, 30, 30, 255);
         SDL_RenderClear(r->renderer);
         SDL_SetRenderDrawColor(r->renderer, 255, 255, 255, 255);
 
+        softbody_update(sb);
 
         softbody_render(sb, r);
 
