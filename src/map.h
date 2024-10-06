@@ -24,6 +24,6 @@ int map_add_edge(Map *m, Vec2 p1, Vec2 p2);
 
 void map_render(Map *m, Renderer *r);
 
-// intersect point, edge dir
-bool map_raycast(Map *m, Vec2 p1, Vec2 p2, Vec2 *pt_out, Vec2 *n_out);
+// intersect points, edge dirs (normals), returns number of intersections
+int map_raycast(Map *m, Vec2 p1, Vec2 p2, Vec2 pts_out[], Vec2 ns_out[]);
 

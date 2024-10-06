@@ -100,24 +100,24 @@ void softbody_update(Softbody *sb, Map *map)
         sb->pts[i].vel.y += GRAVITY;
         sb->pts[i].vel.y *= AIR_RESISTANCE;
         sb->pts[i].vel.x *= AIR_RESISTANCE;
-        //sb->pts[i].pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
         Vec2 next_pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
-        Vec2 pt_out, n_out;
-        if (map_raycast(map, sb->pts[i].pos, next_pos, &pt_out, &n_out))
+        Vec2 pts_out[map->edges_i], ns_out[map->edges_i];
+        int ints = map_raycast(map, sb->pts[i].pos, next_pos, pts_out, ns_out);
+        for (int j = 0; j < ints; ++j)
         {
-            sb->pts[i].vel = vec2_proj(sb->pts[i].vel, n_out);
-            next_pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
+            sb->pts[i].vel = vec2_proj(sb->pts[i].vel, ns_out[j]);
         }
-        sb->pts[i].pos = next_pos;
 
-        
+        // int next_pt_i = i == sb->pts_i - 1 ? 0 : i + 1;
+        // Vec2 next_pt_next_pos = vec2_add(sb->pts[next_pt_i].pos, sb->pts[next_pt_i].vel);
+        // if (map_raycast(map, next_pos, next_pt_next_pos, pts_out, ns_out))
+        // {
+        //     Vec2 next_pt_normal = vec2_sub(sb->pts[i].pos, sb->pts[next_pt_i].pos);
+        //     sb->pts[i].vel = vec2_proj(sb->pts[i].vel, next_pt_normal);
+        //     sb->pts[next_pt_i].vel = vec2_proj(sb->pts[next_pt_i].vel, next_pt_normal);
+        // }
 
-
-        if (sb->pts[i].pos.y > HEIGHT)
-        {
-            sb->pts[i].pos.y = HEIGHT;
-            sb->pts[i].vel.y = 0;
-        }
+        sb->pts[i].pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
     }
 
     // Springs
@@ -150,13 +150,15 @@ void softbody_render(Softbody *sb, Renderer *r)
     // }
     // SDL_SetRenderDrawColor(r->renderer, 255, 255, 255, 255);
     // renderer_draw_filled_circle(r, softbody_center(sb), 5);
-
-    SDL_SetRenderDrawColor(r->renderer, 200, 200, 200, 255);
+    
     Vec2 c = softbody_center(sb);
     for (int i = 0; i < sb->pts_i; ++i)
     {
         int j = i == sb->pts_i - 1 ? 0 : i + 1;
+        SDL_SetRenderDrawColor(r->renderer, 200, 200, 200, 255);
         renderer_draw_filled_solid_triangle(r, sb->pts[i].pos, sb->pts[j].pos, c);
+        SDL_SetRenderDrawColor(r->renderer, 255, 100, 100, 255);
+        renderer_draw_line(r, sb->pts[i].pos, sb->pts[j].pos);
     }
 }
 

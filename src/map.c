@@ -52,16 +52,17 @@ static bool line_intersection(Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2, Vec2* out)
     return true;
 }
 
-bool map_raycast(Map *m, Vec2 p1, Vec2 p2, Vec2 *pt_out, Vec2 *n_out)
+int map_raycast(Map *m, Vec2 p1, Vec2 p2, Vec2 pts_out[], Vec2 ns_out[])
 {
+    int out_i = 0;
     for (int i = 0; i < m->edges_i; ++i)
     {
-        if (line_intersection(p1, p2, m->edges[i].p1, m->edges[i].p2, pt_out))
+        if (line_intersection(p1, p2, m->edges[i].p1, m->edges[i].p2, &pts_out[out_i]))
         {
-            *n_out = vec2_normalized(vec2_sub(m->edges[i].p1, m->edges[i].p2));
-            return true;
+            ns_out[out_i] = vec2_normalized(vec2_sub(m->edges[i].p1, m->edges[i].p2));
+            ++out_i;
         }
     }
-    return false;
+    return out_i;
 }
 
