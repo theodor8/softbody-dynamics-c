@@ -1,4 +1,4 @@
-demo.out: ./src/*.c
+demo.out: ./src/*.c ./src/*.h
 	gcc ./src/*.c -I/opt/homebrew/include -L/opt/homebrew/lib -lSDL2 -Wall -pedantic -o demo.out
 
 leaks: demo.out

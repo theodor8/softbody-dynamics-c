@@ -17,6 +17,14 @@ int main(void)
 
     Renderer *r = renderer_create(WIDTH, HEIGHT);
 
+    Softbody *sb = softbody_create();
+
+    softbody_add_pt(sb, vec2(100, 100));
+    softbody_add_pt(sb, vec2(100, 200));
+    softbody_add_pt(sb, vec2(200, 100));
+    softbody_add_pt(sb, vec2(200, 200));
+    softbody_connect_pts(sb);
+
 
     bool quit = false;
     while (!quit)
@@ -53,12 +61,12 @@ int main(void)
 
 
 
-        SDL_SetRenderDrawColor(r->renderer, 200, 200, 200, 255);
+        SDL_SetRenderDrawColor(r->renderer, 30, 30, 30, 255);
         SDL_RenderClear(r->renderer);
-        SDL_SetRenderDrawColor(r->renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(r->renderer, 255, 255, 255, 255);
 
-        
-        
+
+        softbody_render(sb, r);
 
         SDL_RenderPresent(r->renderer);
         SDL_Delay(30);
@@ -66,6 +74,7 @@ int main(void)
     }
     
 
+    softbody_destroy(sb);
 
     renderer_destroy(r);
 
