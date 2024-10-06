@@ -2,6 +2,7 @@
 
 #include "vec2.h"
 #include "renderer.h"
+#include "map.h"
 
 typedef struct Softbody Softbody;
 
@@ -16,7 +17,7 @@ int softbody_add_spring(Softbody *sb, int i1, int i2);
 
 void softbody_connect_pts(Softbody *sb);
 
-void softbody_update(Softbody *sb);
+void softbody_update(Softbody *sb, Map *map);
 
 void softbody_render(Softbody *sb, Renderer *r);
 

@@ -7,6 +7,7 @@
 #include "common.h"
 #include "vec2.h"
 #include "renderer.h"
+#include "map.h"
 
 typedef struct
 {
@@ -21,7 +22,7 @@ typedef struct
 
 struct Softbody
 {
-    Point *pts;
+    Point *pts; // cw
     int pts_siz;
     int pts_i;
 
@@ -61,9 +62,8 @@ int softbody_add_pt(Softbody *sb, Vec2 pt)
 
     sb->pts[sb->pts_i].pos = pt;
     sb->pts[sb->pts_i].vel = vec2(0, 0);
-    ++sb->pts_i;
 
-    return sb->pts_i - 1;
+    return sb->pts_i++;
 }
 
 int softbody_add_spring(Softbody *sb, int i1, int i2)
@@ -77,9 +77,8 @@ int softbody_add_spring(Softbody *sb, int i1, int i2)
     sb->springs[sb->springs_i].i1 = i1;
     sb->springs[sb->springs_i].i2 = i2;
     sb->springs[sb->springs_i].len = vec2_dist(sb->pts[i1].pos, sb->pts[i2].pos);
-    ++sb->springs_i;
 
-    return sb->springs_i - 1;
+    return sb->springs_i++;
 }
 
 void softbody_connect_pts(Softbody *sb)
@@ -93,14 +92,26 @@ void softbody_connect_pts(Softbody *sb)
     }
 }
 
-void softbody_update(Softbody *sb)
+void softbody_update(Softbody *sb, Map *map)
 {
+    // Points
     for (int i = 0; i < sb->pts_i; ++i)
     {
         sb->pts[i].vel.y += GRAVITY;
         sb->pts[i].vel.y *= AIR_RESISTANCE;
         sb->pts[i].vel.x *= AIR_RESISTANCE;
-        sb->pts[i].pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
+        //sb->pts[i].pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
+        Vec2 next_pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
+        Vec2 pt_out, n_out;
+        if (map_raycast(map, sb->pts[i].pos, next_pos, &pt_out, &n_out))
+        {
+            sb->pts[i].vel = vec2_proj(sb->pts[i].vel, n_out);
+            next_pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
+        }
+        sb->pts[i].pos = next_pos;
+
+        
+
 
         if (sb->pts[i].pos.y > HEIGHT)
         {
@@ -109,6 +120,7 @@ void softbody_update(Softbody *sb)
         }
     }
 
+    // Springs
     for (int i = 0; i < sb->springs_i; ++i)
     {
         Point *p1 = &sb->pts[sb->springs[i].i1];

@@ -6,6 +6,7 @@
 #include "common.h"
 #include "renderer.h"
 #include "softbody.h"
+#include "map.h"
 
 
 
@@ -20,16 +21,16 @@ int main(void)
     //Softbody *sb = softbody_create_rect(vec2(200, 100), vec2(100, 200));
     Softbody *sb = softbody_create_circle(vec2(200, 100), 50, 7);
 
-
+    Map *map = map_create();
+    map_add_edge(map, vec2(50, 400), vec2(300, 550));
 
 
     bool quit = false;
     while (!quit)
     {
-        int mx, my;
-        Uint32 mb = SDL_GetMouseState(&mx, &my);
-        SDL_GetMouseState(&mx, &my);
-        Vec2 mp = vec2(mx, my);
+        // int mx, my;
+        // Uint32 mb = SDL_GetMouseState(&mx, &my);
+        // Vec2 mp = vec2(mx, my);
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -57,20 +58,21 @@ int main(void)
             }
         }
 
-        if (SDL_BUTTON(mb) == SDL_BUTTON_LEFT)
-        {
-            Vec2 c = softbody_center(sb);
-            Vec2 f = vec2_mulf(vec2_normalized(vec2_sub(mp, c)), 5);
-            softbody_apply_force_closest(sb, mp, f);
-        }
+        // if (SDL_BUTTON(mb) == SDL_BUTTON_LEFT)
+        // {
+        //     Vec2 c = softbody_center(sb);
+        //     Vec2 f = vec2_mulf(vec2_normalized(vec2_sub(mp, c)), 5);
+        //     softbody_apply_force_closest(sb, mp, f);
+        // }
 
         SDL_SetRenderDrawColor(r->renderer, 30, 30, 30, 255);
         SDL_RenderClear(r->renderer);
         SDL_SetRenderDrawColor(r->renderer, 255, 255, 255, 255);
 
-        softbody_update(sb);
+        softbody_update(sb, map);
 
         softbody_render(sb, r);
+        map_render(map, r);
 
         SDL_RenderPresent(r->renderer);
         SDL_Delay(30);
@@ -79,6 +81,7 @@ int main(void)
     
 
     softbody_destroy(sb);
+    map_destroy(map);
 
     renderer_destroy(r);
 
