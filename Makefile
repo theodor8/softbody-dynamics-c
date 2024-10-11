@@ -6,3 +6,6 @@ leaks: demo.out
 
 run: demo.out
 	./demo.out
+
+
+.PHONY: leaks, run

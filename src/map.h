@@ -27,3 +27,4 @@ void map_render(Map *m, Renderer *r);
 // intersect points, edge dirs (normals), returns number of intersections
 int map_raycast(Map *m, Vec2 p1, Vec2 p2, Vec2 pts_out[], Vec2 ns_out[]);
 
+
