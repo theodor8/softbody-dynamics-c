@@ -22,7 +22,7 @@ typedef struct
 
 struct Softbody
 {
-    Point *pts; // cw
+    Point *pts; // clockwise
     int pts_siz;
     int pts_i;
 
@@ -98,27 +98,57 @@ void softbody_update(Softbody *sb, Map *map)
     for (int i = 0; i < sb->pts_i; ++i)
     {
         sb->pts[i].vel.y += GRAVITY;
-        sb->pts[i].vel.y *= AIR_RESISTANCE;
-        sb->pts[i].vel.x *= AIR_RESISTANCE;
+        sb->pts[i].vel.y *= 1.0f - AIR_RESISTANCE;
+        sb->pts[i].vel.x *= 1.0f - AIR_RESISTANCE;
+
         Vec2 next_pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
-        Vec2 pts_out[map->edges_i], ns_out[map->edges_i];
-        int ints = map_raycast(map, sb->pts[i].pos, next_pos, pts_out, ns_out);
-        for (int j = 0; j < ints; ++j)
+        Vec2 pts_out[map->edges_i]; // intersection points
+        Edge *edges_out[map->edges_i]; // intersections edges
+        int intersections = map_raycast(map, sb->pts[i].pos, next_pos, pts_out, edges_out);
+        
+        // Project velocity on wall direction --> velocity efter collission
+        // Do it for every intersecting wall
+        for (int j = 0; j < intersections; ++j)
         {
-            sb->pts[i].vel = vec2_proj(sb->pts[i].vel, ns_out[j]);
+            Vec2 edge_dir = vec2_sub(edges_out[j]->p1, edges_out[j]->p2);
+            sb->pts[i].vel.x *= 1.0f - FRICTION;
+            sb->pts[i].vel.y *= 1.0f - FRICTION;
+            sb->pts[i].vel = vec2_proj(sb->pts[i].vel, edge_dir);
         }
+    }
+    // for (int i = 0; i < sb->pts_i; ++i)
+    // {
+    //     // Outer springs intersection
+    //     Vec2 next_pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
+    //     int next_pt_i = i == sb->pts_i - 1 ? 0 : i + 1;
+    //     Vec2 next_pt_next_pos = vec2_add(sb->pts[next_pt_i].pos, sb->pts[next_pt_i].vel);
+    //     Vec2 pts_out[map->edges_i]; // intersection points
+    //     Edge *edges_out[map->edges_i]; // intersections edges
+    //     int intersections = map_raycast(map, next_pos, next_pt_next_pos, pts_out, edges_out);
+    //     for (int j = 0; j < intersections; ++j)
+    //     {
+    //         Vec2 pts_pos_dif = vec2_sub(next_pos, next_pt_next_pos);
+    //         Vec2 edge_pos = vec2_divf(vec2_add(edges_out[j]->p1, edges_out[j]->p1), 2);
+    //         if (vec2_mul(sb->pts[i].vel, edge_pos) > 0)
+    //         {
+    //             // vel facing toward edge pos
+    //             sb->pts[i].vel = vec2_proj(sb->pts[i].vel, pts_pos_dif);
+    //         }
+    //         if (vec2_mul(sb->pts[next_pt_i].vel, edge_pos) > 0)
+    //         {
+    //             // vel facing toward edge pos
+    //             sb->pts[next_pt_i].vel = vec2_proj(sb->pts[next_pt_i].vel, pts_pos_dif);
+    //         }
 
-        // int next_pt_i = i == sb->pts_i - 1 ? 0 : i + 1;
-        // Vec2 next_pt_next_pos = vec2_add(sb->pts[next_pt_i].pos, sb->pts[next_pt_i].vel);
-        // if (map_raycast(map, next_pos, next_pt_next_pos, pts_out, ns_out))
-        // {
-        //     Vec2 next_pt_normal = vec2_sub(sb->pts[i].pos, sb->pts[next_pt_i].pos);
-        //     sb->pts[i].vel = vec2_proj(sb->pts[i].vel, next_pt_normal);
-        //     sb->pts[next_pt_i].vel = vec2_proj(sb->pts[next_pt_i].vel, next_pt_normal);
-        // }
-
+    //     }
+    // }
+    for (int i = 0; i < sb->pts_i; ++i)
+    {
         sb->pts[i].pos = vec2_add(sb->pts[i].pos, sb->pts[i].vel);
     }
+
+
+    
 
     // Springs
     for (int i = 0; i < sb->springs_i; ++i)
@@ -135,31 +165,35 @@ void softbody_update(Softbody *sb, Map *map)
 
 void softbody_render(Softbody *sb, Renderer *r)
 {
-    // debug render
-    // SDL_SetRenderDrawColor(r->renderer, 0, 255, 255, 255);
-    // for (int i = 0; i < sb->pts_i; ++i)
-    // {
-    //     renderer_draw_filled_circle(r, sb->pts[i].pos, 5);
-    // }
-    // SDL_SetRenderDrawColor(r->renderer, 255, 0, 0, 255);
-    // for (int i = 0; i < sb->springs_i; ++i)
-    // {
-    //     Vec2 p1 = sb->pts[sb->springs[i].i1].pos;
-    //     Vec2 p2 = sb->pts[sb->springs[i].i2].pos;
-    //     renderer_draw_line(r, p1, p2);
-    // }
-    // SDL_SetRenderDrawColor(r->renderer, 255, 255, 255, 255);
-    // renderer_draw_filled_circle(r, softbody_center(sb), 5);
-    
-    Vec2 c = softbody_center(sb);
+    // Debug render
+    SDL_SetRenderDrawColor(r->renderer, 255, 0, 0, 255);
+    for (int i = 0; i < sb->springs_i; ++i)
+    {
+        Vec2 p1 = sb->pts[sb->springs[i].i1].pos;
+        Vec2 p2 = sb->pts[sb->springs[i].i2].pos;
+        renderer_draw_line(r, p1, p2);
+    }
     for (int i = 0; i < sb->pts_i; ++i)
     {
         int j = i == sb->pts_i - 1 ? 0 : i + 1;
-        SDL_SetRenderDrawColor(r->renderer, 200, 200, 200, 255);
-        renderer_draw_filled_solid_triangle(r, sb->pts[i].pos, sb->pts[j].pos, c);
-        SDL_SetRenderDrawColor(r->renderer, 255, 100, 100, 255);
+        SDL_SetRenderDrawColor(r->renderer, 255, 255, 255, 100);
         renderer_draw_line(r, sb->pts[i].pos, sb->pts[j].pos);
+        SDL_SetRenderDrawColor(r->renderer, 0, 255, 255, 255);
+        renderer_draw_filled_circle(r, sb->pts[i].pos, 3);
     }
+    SDL_SetRenderDrawColor(r->renderer, 255, 255, 255, 255);
+    renderer_draw_filled_circle(r, softbody_center(sb), 5);
+    
+    // Proper render
+    // Vec2 c = softbody_center(sb);
+    // SDL_SetRenderDrawColor(r->renderer, 200, 200, 200, 255);
+    // for (int i = 0; i < sb->pts_i; ++i)
+    // {
+    //     int j = i == sb->pts_i - 1 ? 0 : i + 1;
+    //     renderer_draw_filled_solid_triangle(r, sb->pts[i].pos, sb->pts[j].pos, c);
+    //     // SDL_SetRenderDrawColor(r->renderer, 255, 100, 100, 255);
+    //     // renderer_draw_line(r, sb->pts[i].pos, sb->pts[j].pos);
+    // }
 }
 
 

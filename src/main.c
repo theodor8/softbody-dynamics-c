@@ -28,9 +28,10 @@ int main(void)
     map_add_edge(map, vec2(20, HEIGHT - 20), vec2(20, 20));
 
 
+    // Uint32 last_ticks = SDL_GetTicks();
     Vec2 mouse_hold_start;
     bool mouse_holding = false;
-    bool running = true;
+    bool running = false;
     bool quit = false;
     while (!quit)
     {
@@ -57,6 +58,12 @@ int main(void)
                         case SDLK_SPACE:
                             running = !running;
                             break;
+
+                        case SDLK_s:
+                            if (!running)
+                            {
+                                softbody_update(sb, map);
+                            }
 
                         default:
                             break;
@@ -97,8 +104,9 @@ int main(void)
         //     softbody_apply_force_closest(sb, mouse_pos, f);
         // }
 
-
-
+        // Uint32 curr_ticks = SDL_GetTicks();
+        // double dt = (float)(curr_ticks - last_ticks) / 1000.0f;
+        // last_ticks = curr_ticks;
         if (running)
         {
             softbody_update(sb, map);

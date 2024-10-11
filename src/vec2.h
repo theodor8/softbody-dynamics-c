@@ -9,7 +9,7 @@ Vec2 vec2(float x, float y);
 
 Vec2 vec2_add(Vec2 v1, Vec2 v2);
 Vec2 vec2_sub(Vec2 v1, Vec2 v2);
-float vec2_mul(Vec2 v1, Vec2 v2);
+float vec2_mul(Vec2 v1, Vec2 v2); // dot product
 
 Vec2 vec2_addf(Vec2 v, float f);
 Vec2 vec2_subf(Vec2 v, float f);
