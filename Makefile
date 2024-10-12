@@ -10,10 +10,10 @@ demo.out: Makefile ./src/*.c ./src/*.h
 leaks: demo.out
 	leaks -atExit -- ./demo.out
 
-run: demo.out
+demo: demo.out
 	./demo.out
 
 
 
-.PHONY: all, clean, leaks, run
+.PHONY: all, clean, leaks, demo
 

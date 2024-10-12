@@ -1,6 +1,7 @@
 #include "vec2.h"
 
 #include <math.h>
+#include <stdbool.h>
 
 
 Vec2 vec2(float x, float y) { return (Vec2){x, y}; }
@@ -23,4 +24,6 @@ float vec2_len_squared(Vec2 v) { return v.x * v.x + v.y * v.y; }
 float vec2_dist(Vec2 v1, Vec2 v2) { return vec2_len(vec2_sub(v1, v2)); }
 float vec2_dist_squared(Vec2 v1, Vec2 v2) { return vec2_len_squared(vec2_sub(v1, v2)); }
 float vec2_ang(Vec2 v) { return atanf(v.y / v.x); }
+
+bool vec2_equal(Vec2 v1, Vec2 v2) { return v1.x == v2.x && v1.y == v2.y; }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 typedef struct
 {
     float x, y;
@@ -26,4 +28,6 @@ float vec2_len_squared(Vec2 v);
 float vec2_dist(Vec2 v1, Vec2 v2);
 float vec2_dist_squared(Vec2 v1, Vec2 v2);
 float vec2_ang(Vec2 v);
+
+bool vec2_equal(Vec2 v1, Vec2 v2);
 

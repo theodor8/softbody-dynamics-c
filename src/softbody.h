@@ -4,28 +4,30 @@
 #include "renderer.h"
 #include "map.h"
 
+typedef struct Point Point;
+typedef struct Spring Spring;
 typedef struct Softbody Softbody;
 
 
 
-Softbody *softbody_create(void);
-void softbody_destroy(Softbody *sb);
+Softbody *sb_create(float spring_strength);
+void sb_destroy(Softbody *sb);
 
-// returns index
-int softbody_add_pt(Softbody *sb, Vec2 pt);
-int softbody_add_spring(Softbody *sb, int i1, int i2);
+Point *sb_add_pt(Softbody *sb, Vec2 pos);
+Spring *sb_add_spring(Softbody *sb, Point *pt1, Point *pt2);
 
-void softbody_connect_pts(Softbody *sb);
+void sb_connect_pts(Softbody *sb);
 
-void softbody_update(Softbody *sb, Map *map);
+void sb_update(Softbody *sb, Map *map);
 
-void softbody_render(Softbody *sb, Renderer *r);
+void sb_render(Softbody *sb, Renderer *r);
 
-Softbody *softbody_create_rect(Vec2 pos, Vec2 siz);
-Softbody *softbody_create_circle(Vec2 pos, float r, int num_pts);
+Softbody *sb_create_rect(Vec2 pos, Vec2 siz, float spring_strength);
+Softbody *sb_create_filled_rect(Vec2 pos, Vec2 siz, int rows, int cols, float spring_strength);
+Softbody *sb_create_circle(Vec2 pos, float r, int num_pts, float spring_strength);
 
-Vec2 softbody_center(Softbody *sb);
+Vec2 sb_center(Softbody *sb);
 
-void softbody_apply_force(Softbody *sb, Vec2 f);
-void softbody_apply_force_closest(Softbody *sb, Vec2 pos, Vec2 f);
+void sb_apply_force(Softbody *sb, Vec2 f);
+void sb_apply_force_closest(Softbody *sb, Vec2 pos, Vec2 f);
 
