@@ -23,9 +23,9 @@ int main(void)
     int sbs_i = 0;
 
 
-    //sbs[sbs_i++] = sb_create_rect(vec2(100, 100), vec2(50, 100), 0.07f);
-    //sbs[sbs_i++] = sb_create_circle(vec2(200, 100), 50, 10, 0.06f);
-    sbs[sbs_i++] = sb_create_filled_rect(vec2(200, 100), vec2(100, 200), 6, 5, 0.45f);
+    //sbs[sbs_i++] = sb_create_rect(vec2(100, 100), vec2(50, 100), 0.3);
+    sbs[sbs_i++] = sb_create_circle(vec2(200, 100), 50, 10, 0.06f);
+    //sbs[sbs_i++] = sb_create_filled_rect(vec2(200, 100), vec2(100, 200), 6, 5, 0.45f);
 
     Map *map = map_create();
     map_add_edge(map, vec2(20, 20), vec2(WIDTH - 20, 20));
@@ -35,19 +35,22 @@ int main(void)
 
 
 
-
+    
     Vec2 mouse_hold_start;
     bool mouse_holding = false;
     Vec2 *mouse_dragging_edge = NULL;
 
+    bool step_update = false;
     bool running = false;
     bool quit = false;
 
+    // Uint64 prev_ticks = SDL_GetTicks64();
     while (!quit)
     {
         int mx, my;
         Uint32 mouse_buttons = SDL_GetMouseState(&mx, &my);
         Vec2 mouse_pos = vec2(mx, my);
+
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -72,10 +75,7 @@ int main(void)
                         case SDLK_s:
                             if (!running)
                             {
-                                for (int i = 0; i < sbs_i; ++i)
-                                {
-                                    sb_update(sbs[i], map);
-                                }
+                                step_update = true;
                             }
 
                         default:
@@ -149,9 +149,12 @@ int main(void)
             }
         }
 
-
-        if (running)
+        // Uint64 curr_ticks = SDL_GetTicks64();
+        // float dt = (curr_ticks - prev_ticks) / 1000.0f;
+        // prev_ticks = curr_ticks;
+        if (running || step_update)
         {
+            step_update = false;
             for (int i = 0; i < sbs_i; ++i)
             {
                 sb_update(sbs[i], map);

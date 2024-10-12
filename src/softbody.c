@@ -147,8 +147,8 @@ void sb_update(Softbody *sb, Map *map)
     {
         Point *point = sb->pts[i];
 
-        point->vel.x *= 1.0f - AIR_RESISTANCE;
-        point->vel.y *= 1.0f - AIR_RESISTANCE;
+        point->vel.x *= 1.0f - DRAG;
+        point->vel.y *= 1.0f - DRAG;
         point->vel.y += GRAVITY;
 
         Vec2 next_pos = vec2_add(point->pos, point->vel);
@@ -164,15 +164,17 @@ void sb_update(Softbody *sb, Map *map)
             point->vel.x *= 1.0f - FRICTION;
             point->vel.y *= 1.0f - FRICTION;
             point->vel = vec2_proj(point->vel, edge_dir);
+
+            // TODO move pt to intersect pt
         }
     }
 
     for (int i = 0; i < sb->pts_i; ++i)
     {
         Point *point = sb->pts[i];
-        point->pos = vec2_add(point->pos, point->vel);
+        point->pos.x += point->vel.x;
+        point->pos.y += point->vel.y;
     }
-    
 
     // Springs
     for (int i = 0; i < sb->springs_i; ++i)
@@ -187,6 +189,8 @@ void sb_update(Softbody *sb, Map *map)
         pt1->vel = vec2_sub(pt1->vel, f);
         pt2->vel = vec2_add(pt2->vel, f);
     }
+
+
 }
 
 void sb_render(Softbody *sb, Renderer *r)
