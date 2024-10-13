@@ -42,16 +42,6 @@ void map_render(Map *m, Renderer *r)
     }
 }
 
-static bool line_intersection(Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2, Vec2* out)
-{
-    float t = ((a1.x-b1.x) * (b1.y-b2.y) - (a1.y-b1.y) * (b1.x-b2.x)) / ((a1.x-a2.x) * (b1.y-b2.y) - (a1.y-a2.y) * (b1.x-b2.x));
-    if (t < 0 || t > 1) return false;
-    float u = -((a1.x-a2.x) * (a1.y-b1.y) - (a1.y-a2.y) * (a1.x-b1.x)) / ((a1.x-a2.x) * (b1.y-b2.y) - (a1.y-a2.y) * (b1.x-b2.x));
-    if (u < 0 || u > 1) return false;
-    *out = vec2(a1.x + t * (a2.x - a1.x), a1.y + t * (a2.y - a1.y));
-    return true;
-}
-
 int map_raycast(Map *m, Vec2 p1, Vec2 p2, Vec2 pts_out[], Edge *edges_out[])
 {
     int out_i = 0;

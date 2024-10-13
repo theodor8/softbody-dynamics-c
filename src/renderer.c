@@ -86,4 +86,3 @@ void renderer_draw_filled_circle(Renderer *r, Vec2 center, float radius)
         v1 = v2;
     }
 }
-

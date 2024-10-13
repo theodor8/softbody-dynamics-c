@@ -20,18 +20,17 @@ int main(void)
     const Uint8* keyboard_state = SDL_GetKeyboardState(NULL);
 
     Softbody *sbs[10] = {0};
-    int sbs_i = 0;
+    int sbs_i = 0; 
 
-
-    //sbs[sbs_i++] = sb_create_rect(vec2(100, 100), vec2(50, 100), 0.3);
-    sbs[sbs_i++] = sb_create_circle(vec2(200, 100), 50, 10, 0.06f);
-    //sbs[sbs_i++] = sb_create_filled_rect(vec2(200, 100), vec2(100, 200), 6, 5, 0.45f);
+    //sbs[sbs_i++] = sb_create_rect(vec2(100, 100), vec2(50, 100), 0.08, 0.05);
+    //sbs[sbs_i++] = sb_create_circle(vec2(200, 100), 50, 10, 0.06f, 0.1f);
+    sbs[sbs_i++] = sb_create_filled_rect(vec2(200, 100), vec2(150, 225), 5, 4, 0.25f, 0.09f);
 
     Map *map = map_create();
-    map_add_edge(map, vec2(20, 20), vec2(WIDTH - 20, 20));
-    map_add_edge(map, vec2(WIDTH - 20, 20), vec2(WIDTH - 20, HEIGHT - 20));
-    map_add_edge(map, vec2(WIDTH - 20, HEIGHT - 20), vec2(20, HEIGHT - 20));
-    map_add_edge(map, vec2(20, HEIGHT - 20), vec2(20, 20));
+    map_add_edge(map, vec2(0, 20), vec2(WIDTH, 20));
+    map_add_edge(map, vec2(WIDTH - 20, 0), vec2(WIDTH - 20, HEIGHT));
+    map_add_edge(map, vec2(WIDTH, HEIGHT - 20), vec2(0, HEIGHT - 20));
+    map_add_edge(map, vec2(20, HEIGHT), vec2(20, 0));
 
 
 
@@ -40,11 +39,11 @@ int main(void)
     bool mouse_holding = false;
     Vec2 *mouse_dragging_edge = NULL;
 
-    bool step_update = false;
     bool running = false;
     bool quit = false;
 
-    // Uint64 prev_ticks = SDL_GetTicks64();
+    Uint64 prev_ticks = SDL_GetTicks64();
+    Uint64 delta_ticks = 0;
     while (!quit)
     {
         int mx, my;
@@ -75,8 +74,12 @@ int main(void)
                         case SDLK_s:
                             if (!running)
                             {
-                                step_update = true;
+                                for (int i = 0; i < sbs_i; ++i)
+                                {
+                                    sb_update(sbs[i], map);
+                                }
                             }
+                            break;
 
                         default:
                             break;
@@ -114,12 +117,12 @@ int main(void)
 
                 for (int i = 0; i < map->edges_i; ++i)
                 {
-                    if (vec2_dist(mouse_pos, map->edges[i].p1) < 20)
+                    if (vec2_dist(mouse_pos, map->edges[i].p1) < 15)
                     {
                         mouse_dragging_edge = &map->edges[i].p1;
                         break;
                     }
-                    if (vec2_dist(mouse_pos, map->edges[i].p2) < 20)
+                    if (vec2_dist(mouse_pos, map->edges[i].p2) < 15)
                     {
                         mouse_dragging_edge = &map->edges[i].p2;
                         break;
@@ -144,22 +147,26 @@ int main(void)
             for (int i = 0; i < sbs_i; ++i)
             {
                 Vec2 c = sb_center(sbs[i]);
-                Vec2 f = vec2_mulf(vec2_normalized(vec2_sub(mouse_pos, c)), 5);
+                Vec2 f = vec2_mulf(vec2_normalized(vec2_sub(mouse_pos, c)), 3);
                 sb_apply_force_closest(sbs[i], mouse_pos, f);
             }
         }
 
-        // Uint64 curr_ticks = SDL_GetTicks64();
-        // float dt = (curr_ticks - prev_ticks) / 1000.0f;
-        // prev_ticks = curr_ticks;
-        if (running || step_update)
+        Uint64 curr_ticks = SDL_GetTicks64();
+        if ((running))
         {
-            step_update = false;
-            for (int i = 0; i < sbs_i; ++i)
+            delta_ticks += curr_ticks - prev_ticks;
+            while (delta_ticks >= 30)
             {
-                sb_update(sbs[i], map);
+                for (int i = 0; i < sbs_i; ++i)
+                {
+                    sb_update(sbs[i], map);
+                }
+                delta_ticks -= 30;
             }
         }
+        prev_ticks = curr_ticks;
+
 
         for (int i = 0; i < sbs_i; ++i)
         {
@@ -169,7 +176,7 @@ int main(void)
         map_render(map, r);
 
         SDL_RenderPresent(r->renderer);
-        SDL_Delay(30);
+        SDL_Delay(10);
 
     }
     
