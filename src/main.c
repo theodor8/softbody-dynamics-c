@@ -3,12 +3,87 @@
 
 #include "SDL2/SDL.h"
 
-#include "common.h"
 #include "renderer.h"
-#include "softbody.h"
-#include "map.h"
+#include "world.h"
 
 
+#define WIDTH 600
+#define HEIGHT 600
+
+
+void connect_points(World *world, Point *pts[], int pts_siz, float spring_strength, float spring_damping)
+{
+    for (int i = 0; i < pts_siz; ++i)
+    {
+        for (int j = i + 1; j < pts_siz; ++j)
+        {
+            world_add_spring(world, pts[i], pts[j], spring_strength, spring_damping);
+        }
+    }
+}
+
+
+void create_rect(World *world, Vec2 pos, Vec2 siz, float spring_strength, float spring_damping)
+{
+    Point *pts[4];
+    pts[0] = world_add_pt(world, pos);
+    pts[1] = world_add_pt(world, vec2(pos.x + siz.x, pos.y));
+    pts[2] = world_add_pt(world, vec2(pos.x + siz.x, pos.y + siz.y));
+    pts[3] = world_add_pt(world, vec2(pos.x, pos.y + siz.y));
+    connect_points(world, pts, 4, spring_strength, spring_damping);
+
+}
+
+void create_filled_rect(World *world, Vec2 pos, Vec2 siz, int rows, int cols, float spring_strength, float spring_damping)
+{
+    Point *pts[rows * cols];
+    siz.x /= cols;
+    siz.y /= rows;
+    for (int r = 0; r < rows; ++r)
+    {
+        float y = pos.y + siz.y * r;
+        for (int c = 0; c < cols; ++c)
+        {
+            float x = pos.x + siz.x * c;
+            pts[r * cols + c] = world_add_pt(world, vec2(x, y));
+        }
+    }
+
+    // Connect points
+    for (int i = 0; i < rows * cols; ++i)
+    {
+        Point *pt = pts[i];
+        if (i % cols != 0) // Left
+        {
+            world_add_spring(world, pt, pts[i - 1], spring_strength, spring_damping);
+        }
+        if (i >= cols) // Up
+        {
+            world_add_spring(world, pt, pts[i - cols], spring_strength, spring_damping);
+        }
+        if (i % cols != 0 && i >= cols) // Left Up
+        {
+            world_add_spring(world, pt, pts[i - cols - 1], spring_strength, spring_damping);
+        }
+        if (i % cols != 0 && i < cols * (rows - 1)) // Left Down
+        {
+            world_add_spring(world, pt, pts[i + cols - 1], spring_strength, spring_damping);
+        }
+    }
+}
+
+void create_circle(World *world, Vec2 pos, float r, int num_pts, float spring_strength, float spring_damping)
+{
+    Point *pts[num_pts];
+    float da = 2 * M_PI / num_pts;
+    for (int i = 0; i < num_pts; ++i)
+    {
+        float a = da * i;
+        Vec2 pt = vec2_add(pos, vec2(cosf(a) * r, sinf(a) * r));
+        pts[i] = world_add_pt(world, pt);
+    }
+    connect_points(world, pts, num_pts, spring_strength, spring_damping);
+}
 
 
 
@@ -16,21 +91,20 @@ int main(void)
 {
     srand(time(NULL));
 
-    Renderer *r = renderer_create(WIDTH, HEIGHT);
-    const Uint8* keyboard_state = SDL_GetKeyboardState(NULL);
+    Renderer *renderer = renderer_create(WIDTH, HEIGHT);
+    // const Uint8* keyboard_state = SDL_GetKeyboardState(NULL);
 
-    Softbody *sbs[10] = {0};
-    int sbs_i = 0; 
+    World *world = world_create(0.35, 0.01, 0.2);
 
-    //sbs[sbs_i++] = sb_create_rect(vec2(100, 100), vec2(50, 100), 0.08, 0.05);
-    //sbs[sbs_i++] = sb_create_circle(vec2(200, 100), 50, 10, 0.06f, 0.1f);
-    sbs[sbs_i++] = sb_create_filled_rect(vec2(200, 100), vec2(150, 225), 5, 4, 0.25f, 0.09f);
+    // create_rect(world, vec2(90, 100), vec2(50, 100), 0.08, 0.05);
+    // create_rect(world, vec2(100, 350), vec2(200, 100), 0.08, 0.05);
+    // create_circle(world, vec2(200, 100), 50, 10, 0.06f, 0.1f);
+    create_filled_rect(world, vec2(200, 100), vec2(150, 225), 5, 4, 0.25f, 0.09f);
 
-    Map *map = map_create();
-    map_add_edge(map, vec2(0, 20), vec2(WIDTH, 20));
-    map_add_edge(map, vec2(WIDTH - 20, 0), vec2(WIDTH - 20, HEIGHT));
-    map_add_edge(map, vec2(WIDTH, HEIGHT - 20), vec2(0, HEIGHT - 20));
-    map_add_edge(map, vec2(20, HEIGHT), vec2(20, 0));
+    world_add_edge(world, vec2(0, 20), vec2(WIDTH, 20));
+    world_add_edge(world, vec2(WIDTH - 20, 0), vec2(WIDTH - 20, HEIGHT));
+    world_add_edge(world, vec2(WIDTH, HEIGHT - 20), vec2(0, HEIGHT - 20));
+    world_add_edge(world, vec2(20, HEIGHT), vec2(20, 0));
 
 
 
@@ -74,10 +148,7 @@ int main(void)
                         case SDLK_s:
                             if (!running)
                             {
-                                for (int i = 0; i < sbs_i; ++i)
-                                {
-                                    sb_update(sbs[i], map);
-                                }
+                                world_step(world);
                             }
                             break;
 
@@ -91,8 +162,8 @@ int main(void)
             }
         }
 
-        SDL_SetRenderDrawColor(r->renderer, 30, 30, 30, 255);
-        SDL_RenderClear(r->renderer);
+        renderer_set_draw_color(renderer, 30, 30, 30, 255);
+        renderer_clear(renderer);
 
 
         // Mouse controls
@@ -106,8 +177,8 @@ int main(void)
                 }
                 else
                 {
-                    SDL_SetRenderDrawColor(r->renderer, 255, 150, 150, 255);
-                    renderer_draw_line(r, mouse_hold_start, mouse_pos);
+                    renderer_set_draw_color(renderer, 255, 150, 150, 255);
+                    renderer_draw_line(renderer, mouse_hold_start, mouse_pos);
                 }
             }
             else
@@ -115,19 +186,19 @@ int main(void)
                 mouse_holding = true;
                 mouse_hold_start = mouse_pos;
 
-                for (int i = 0; i < map->edges_i; ++i)
-                {
-                    if (vec2_dist(mouse_pos, map->edges[i].p1) < 15)
-                    {
-                        mouse_dragging_edge = &map->edges[i].p1;
-                        break;
-                    }
-                    if (vec2_dist(mouse_pos, map->edges[i].p2) < 15)
-                    {
-                        mouse_dragging_edge = &map->edges[i].p2;
-                        break;
-                    }
-                }
+                // for (int i = 0; i < map->edges_i; ++i)
+                // {
+                //     if (vec2_dist(mouse_pos, map->edges[i].p1) < 15)
+                //     {
+                //         mouse_dragging_edge = &map->edges[i].p1;
+                //         break;
+                //     }
+                //     if (vec2_dist(mouse_pos, map->edges[i].p2) < 15)
+                //     {
+                //         mouse_dragging_edge = &map->edges[i].p2;
+                //         break;
+                //     }
+                // }
             }
         }
         else if (mouse_holding)
@@ -135,22 +206,22 @@ int main(void)
             mouse_holding = false;
             if (!mouse_dragging_edge && !vec2_equal(mouse_hold_start, mouse_pos))
             {
-                map_add_edge(map, mouse_hold_start, mouse_pos);
+                world_add_edge(world, mouse_hold_start, mouse_pos);
             }
             mouse_dragging_edge = NULL;
         }
 
 
         // Apply force
-        if (running && keyboard_state[SDL_SCANCODE_F])
-        {
-            for (int i = 0; i < sbs_i; ++i)
-            {
-                Vec2 c = sb_center(sbs[i]);
-                Vec2 f = vec2_mulf(vec2_normalized(vec2_sub(mouse_pos, c)), 3);
-                sb_apply_force_closest(sbs[i], mouse_pos, f);
-            }
-        }
+        // if (running && keyboard_state[SDL_SCANCODE_F])
+        // {
+        //     for (int i = 0; i < sbs_i; ++i)
+        //     {
+        //         Vec2 c = sb_center(sbs[i]);
+        //         Vec2 f = vec2_mulf(vec2_normalized(vec2_sub(mouse_pos, c)), 3);
+        //         sb_apply_force_closest(sbs[i], mouse_pos, f);
+        //     }
+        // }
 
         Uint64 curr_ticks = SDL_GetTicks64();
         if ((running))
@@ -158,36 +229,25 @@ int main(void)
             delta_ticks += curr_ticks - prev_ticks;
             while (delta_ticks >= 30)
             {
-                for (int i = 0; i < sbs_i; ++i)
-                {
-                    sb_update(sbs[i], map);
-                }
+                world_step(world);
                 delta_ticks -= 30;
             }
         }
         prev_ticks = curr_ticks;
 
 
-        for (int i = 0; i < sbs_i; ++i)
-        {
-            sb_render(sbs[i], r);
-        }
+        world_render(world, renderer);
 
-        map_render(map, r);
 
-        SDL_RenderPresent(r->renderer);
+        renderer_present(renderer);
         SDL_Delay(10);
 
     }
     
 
-    for (int i = 0; i < sbs_i; ++i)
-    {
-        sb_destroy(sbs[i]);
-    }
-    map_destroy(map);
+    world_destroy(world);
 
-    renderer_destroy(r);
+    renderer_destroy(renderer);
 
     return 0;
 }
